@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.danp.alertaurbana.domain.model.Report
 import com.danp.alertaurbana.domain.model.ReportStatus
 import com.danp.alertaurbana.ui.viewmodel.ReportsListViewModel
@@ -25,7 +26,7 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportsListScreen(
-    onReportClick: (String) -> Unit = {},
+    navController: NavController,
     viewModel: ReportsListViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -73,23 +74,15 @@ fun ReportsListScreen(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(16.dp),
+                modifier = Modifier.padding(horizontal = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                item {
-                    Text(
-                        text = "Reportes (${uiState.reports.size})",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(bottom = 8.dp)
-                    )
-                }
-
                 items(uiState.reports) { report ->
                     ReportCard(
                         report = report,
-                        onClick = { onReportClick(report.id) }
+                        onClick = {
+                            navController.navigate("report_detail/${report.id}")
+                        }
                     )
                 }
             }

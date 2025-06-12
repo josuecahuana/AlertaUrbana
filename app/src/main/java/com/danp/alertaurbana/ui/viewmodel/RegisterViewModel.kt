@@ -38,7 +38,6 @@ class RegisterViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
 
-            // Simular llamada de red
             delay(2000)
 
             val currentState = _uiState.value

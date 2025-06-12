@@ -6,7 +6,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import com.danp.alertaurbana.ui.viewmodel.ReportDetailViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -24,6 +25,7 @@ import java.util.*
 @Composable
 fun ReportDetailScreen(
     reportId: String,
+    navController: NavHostController,
     onNavigateBack: () -> Unit = {},
     viewModel: ReportDetailViewModel = viewModel()
 ) {
@@ -148,7 +150,7 @@ fun ReportDetailContent(report: com.danp.alertaurbana.domain.model.Report) {
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
-                        Icons.Default.Person,
+                        Icons.Default.DateRange,
                         contentDescription = null,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier.size(16.dp)

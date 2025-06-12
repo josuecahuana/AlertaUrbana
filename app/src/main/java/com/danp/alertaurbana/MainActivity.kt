@@ -1,6 +1,5 @@
 package com.danp.alertaurbana
 
-
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -9,7 +8,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -68,9 +66,7 @@ fun HurtosApp() {
 
         composable("reports_list") {
             ReportsListScreen(
-                onReportClick = { reportId ->
-                    navController.navigate("report_detail/$reportId")
-                }
+                navController = navController
             )
         }
 
@@ -78,6 +74,7 @@ fun HurtosApp() {
             val reportId = backStackEntry.arguments?.getString("reportId") ?: ""
             ReportDetailScreen(
                 reportId = reportId,
+                navController = navController,
                 onNavigateBack = {
                     navController.popBackStack()
                 }
