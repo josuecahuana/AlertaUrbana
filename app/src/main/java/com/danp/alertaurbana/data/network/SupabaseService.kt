@@ -1,8 +1,13 @@
 package com.danp.alertaurbana.data.network
 
 import com.danp.alertaurbana.data.model.ReportDto
+import retrofit2.http.Body
+import retrofit2.http.DELETE
 import retrofit2.http.GET
 import retrofit2.http.Headers
+import retrofit2.http.PATCH
+import retrofit2.http.POST
+import retrofit2.http.Path
 
 interface SupabaseService {
 
@@ -13,4 +18,30 @@ interface SupabaseService {
     @GET("reports?select=*")
     suspend fun getReports(): List<ReportDto>
 
+
+    // Fabián:
+    @Headers(
+        "apikey: mi clave",
+        "Authorization: Bearer mi token",
+        "Content-Type: application/json",
+        "Prefer: return=representation"
+    )
+    @POST("reports")
+    suspend fun createReport(@Body report: ReportDto): ReportDto
+
+    @Headers(
+        "apikey: mi clave",
+        "Authorization: Bearer mi token",
+        "Content-Type: application/json",
+        "Prefer: return=representation"
+    )
+    @PATCH("reports?id=eq.{id}")
+    suspend fun updateReport(@Path("id") id: String, @Body report: ReportDto): ReportDto
+
+    @Headers(
+        "apikey: mi clave",
+        "Authorization: Bearer mi token"
+    )
+    @DELETE("reports?id=eq.{id}")
+    suspend fun deleteReport(@Path("id") id: String)
 }

@@ -26,13 +26,15 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportsListScreen(
+    onNavigateToDetail: (Int) -> Unit,
+    modifier: Modifier = Modifier,
     navController: NavController,
     viewModel: ReportsListViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         // Barra de búsqueda
         OutlinedTextField(

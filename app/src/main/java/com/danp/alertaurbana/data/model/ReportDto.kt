@@ -4,6 +4,7 @@ import com.danp.alertaurbana.domain.model.Report
 import com.danp.alertaurbana.domain.model.ReportStatus
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import java.text.SimpleDateFormat
 import java.util.*
 
 @JsonClass(generateAdapter = true)
@@ -18,7 +19,7 @@ data class ReportDto(
     val images: List<String> = emptyList()
 ) {
     fun toDomain(): Report {
-        val format = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+        val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
         val parsedDate = try {
             format.parse(date) ?: Date()
         } catch (e: Exception) {
@@ -35,5 +36,22 @@ data class ReportDto(
             userId = userId,
             images = images
         )
+    }
+
+    companion object {
+        fun fromDomain(report: Report): ReportDto {
+            val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+
+            return ReportDto(
+                id = report.id,
+                title = report.title,
+                description = report.description,
+                location = report.location,
+                date = format.format(report.date),
+                status = report.status.name,
+                userId = report.userId,
+                images = report.images
+            )
+        }
     }
 }

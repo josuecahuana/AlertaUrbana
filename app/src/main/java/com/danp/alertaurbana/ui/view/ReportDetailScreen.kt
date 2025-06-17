@@ -27,6 +27,7 @@ fun ReportDetailScreen(
     reportId: String,
     navController: NavHostController,
     onNavigateBack: () -> Unit = {},
+    modifier: Modifier = Modifier,
     viewModel: ReportDetailViewModel = viewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -36,7 +37,7 @@ fun ReportDetailScreen(
     }
 
     Column(
-        modifier = Modifier.fillMaxSize()
+        modifier = modifier.fillMaxSize()
     ) {
         // Top App Bar
         TopAppBar(
