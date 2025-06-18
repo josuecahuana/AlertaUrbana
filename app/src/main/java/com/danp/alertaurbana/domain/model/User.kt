@@ -2,7 +2,8 @@ package com.danp.alertaurbana.domain.model
 
 data class User(
     val id: String,
-    val email: String,
-    val name: String,
-    val phone: String? = null
+    val nombre: String?,
+    val direccion: String?,
+    val telefono: String?,
+    val fotoUrl: String?
 )

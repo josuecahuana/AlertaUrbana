@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
@@ -26,18 +27,18 @@ import java.util.*
 fun ReportDetailScreen(
     reportId: String,
     navController: NavHostController,
-    onNavigateBack: () -> Unit = {},
     modifier: Modifier = Modifier,
-    viewModel: ReportDetailViewModel = viewModel()
+    onNavigateBack: () -> Unit = {},
+    viewModel: ReportDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     LaunchedEffect(reportId) {
-        viewModel.loadReportDetail(reportId)
+        viewModel.loadReportById(reportId)
     }
 
     Column(
-        modifier = modifier.fillMaxSize()
+        modifier = Modifier.fillMaxSize()
     ) {
         // Top App Bar
         TopAppBar(
@@ -72,7 +73,7 @@ fun ReportDetailScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                         Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.loadReportDetail(reportId) }) {
+                        Button(onClick = { viewModel.loadReportById(reportId) }) {
                             Text("Reintentar")
                         }
                     }

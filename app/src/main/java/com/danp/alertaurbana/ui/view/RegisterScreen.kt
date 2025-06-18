@@ -1,110 +1,74 @@
 package com.danp.alertaurbana.ui.view
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.danp.alertaurbana.ui.viewmodel.RegisterViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.danp.alertaurbana.ui.viewmodel.AuthState
+import com.danp.alertaurbana.ui.viewmodel.AuthViewModel
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegisterScreen(
-    onNavigateToLogin: () -> Unit = {},
-    onRegisterSuccess: () -> Unit = {},
-    viewModel: RegisterViewModel = viewModel()
+    onRegisterSuccess: () -> Unit,
+    onNavigateToLogin: () -> Unit,
+    viewModel: AuthViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
 
-    // Observer para el éxito del registro
-    LaunchedEffect(uiState.isRegistrationSuccessful) {
-        if (uiState.isRegistrationSuccessful) {
-            onRegisterSuccess()
-        }
-    }
+    val authState by viewModel.authState.collectAsState()
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(24.dp)
-            .verticalScroll(rememberScrollState()),
+            .padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Crear cuenta",
-            fontSize = 28.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.padding(bottom = 32.dp)
-        )
-
-        OutlinedTextField(
-            value = uiState.name,
-            onValueChange = viewModel::updateName,
-            label = { Text("Nombre completo *") },
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading
-        )
+        Text("Crear cuenta", fontSize = 28.sp)
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = uiState.email,
-            onValueChange = viewModel::updateEmail,
-            label = { Text("Correo electrónico *") },
+            value = email,
+            onValueChange = { email = it },
+            label = { Text("Correo electrónico") },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = uiState.phone,
-            onValueChange = viewModel::updatePhone,
-            label = { Text("Teléfono") },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        OutlinedTextField(
-            value = uiState.password,
-            onValueChange = viewModel::updatePassword,
-            label = { Text("Contraseña *") },
+            value = password,
+            onValueChange = { password = it },
+            label = { Text("Contraseña") },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading
+            modifier = Modifier.fillMaxWidth()
         )
 
         Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
-            value = uiState.confirmPassword,
-            onValueChange = viewModel::updateConfirmPassword,
-            label = { Text("Confirmar contraseña *") },
+            value = confirmPassword,
+            onValueChange = { confirmPassword = it },
+            label = { Text("Confirmar contraseña") },
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading
+            modifier = Modifier.fillMaxWidth()
         )
 
-        if (uiState.errorMessage != null) {
+        if (authState is AuthState.Error) {
             Text(
-                text = uiState.errorMessage!!,
+                text = (authState as AuthState.Error).message,
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.padding(top = 8.dp)
             )
@@ -113,15 +77,16 @@ fun RegisterScreen(
         Spacer(modifier = Modifier.height(24.dp))
 
         Button(
-            onClick = viewModel::register,
+            onClick = {
+                if (password == confirmPassword) {
+                    viewModel.register(email, password)
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
-            enabled = !uiState.isLoading
+            enabled = authState !is AuthState.Loading
         ) {
-            if (uiState.isLoading) {
-                CircularProgressIndicator(
-                    modifier = Modifier.size(16.dp),
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
+            if (authState is AuthState.Loading) {
+                CircularProgressIndicator(modifier = Modifier.size(16.dp))
             } else {
                 Text("Registrarse")
             }
@@ -129,11 +94,25 @@ fun RegisterScreen(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(
-            onClick = onNavigateToLogin,
-            enabled = !uiState.isLoading
-        ) {
+        TextButton(onClick = onNavigateToLogin) {
             Text("¿Ya tienes cuenta? Inicia sesión")
         }
+    }
+
+    // ✅ Mostrar diálogo de éxito al registrar
+    if (authState is AuthState.RegisterSuccess) {
+        AlertDialog(
+            onDismissRequest = {},
+            title = { Text("Registro exitoso") },
+            text = { Text((authState as AuthState.RegisterSuccess).message) },
+            confirmButton = {
+                Button(onClick = {
+                    viewModel.clearAuthState()
+                    onNavigateToLogin()
+                }) {
+                    Text("OK")
+                }
+            }
+        )
     }
 }

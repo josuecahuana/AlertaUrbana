@@ -1,18 +1,27 @@
-// 4. ReportsListViewModel.kt
 package com.danp.alertaurbana.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.danp.alertaurbana.data.repository.ReportRepository
 import com.danp.alertaurbana.domain.model.Report
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class ReportsListViewModel : ViewModel() {
+data class ReportsListUiState(
+    val reports: List<Report> = emptyList(),
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val searchQuery: String = ""
+)
 
-    private val repository = ReportRepository()
+@HiltViewModel
+class ReportsListViewModel @Inject constructor(
+    private val repository: ReportRepository
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(ReportsListUiState())
     val uiState: StateFlow<ReportsListUiState> = _uiState.asStateFlow()
@@ -32,7 +41,6 @@ class ReportsListViewModel : ViewModel() {
                     errorMessage = null
                 )
             } catch (e: Exception) {
-                println("Error loading reports: ${e.message}")
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     errorMessage = "Error al cargar reportes: ${e.localizedMessage}"
@@ -49,7 +57,6 @@ class ReportsListViewModel : ViewModel() {
     private fun searchReports(query: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
-
             try {
                 val allReports = repository.getReports()
                 val filteredReports = if (query.isBlank()) {
@@ -61,7 +68,6 @@ class ReportsListViewModel : ViewModel() {
                                 report.location.contains(query, ignoreCase = true)
                     }
                 }
-
                 _uiState.value = _uiState.value.copy(
                     isLoading = false,
                     reports = filteredReports,

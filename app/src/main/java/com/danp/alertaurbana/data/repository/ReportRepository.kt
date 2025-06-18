@@ -1,25 +1,30 @@
 package com.danp.alertaurbana.data.repository
 
-import com.danp.alertaurbana.data.network.RetrofitInstance
-import com.danp.alertaurbana.data.network.RetrofitInstance.api
+import com.danp.alertaurbana.data.network.SupabaseService
 import com.danp.alertaurbana.domain.model.Report
 import com.danp.alertaurbana.data.model.ReportDto
 import javax.inject.Inject
 import javax.inject.Singleton
+import javax.inject.Named
 
-@Singleton
-class ReportRepository @Inject constructor() {
+class ReportRepository @Inject constructor(
+    private val api: SupabaseService,
+    @Named("supabaseApiKey") private val supabaseApiKey: String
+) {
+    private val authorization = "Bearer $supabaseApiKey"
+
     suspend fun fetchReports(): List<Report> {
-        val dtos = RetrofitInstance.api.getReports()
+        val dtos = api.getReports(supabaseApiKey, authorization)
         return dtos.map { it.toDomain() }
     }
 
     suspend fun getReportById(id: String): Report? {
-        return getReports().find { it.id == id }
+        val dtos = api.getReportById(supabaseApiKey, authorization, "eq.$id")
+        return dtos.firstOrNull()?.toDomain()
     }
 
     suspend fun getReports(): List<Report> {
-        return api.getReports().map { it.toDomain() }
+        return api.getReports(supabaseApiKey, authorization).map { it.toDomain() }
     }
     //Fabián
     suspend fun createReport(report: Report): Result<Report> {

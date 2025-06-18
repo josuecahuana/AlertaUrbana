@@ -72,7 +72,6 @@ dependencies {
     implementation("io.github.jan-tennert.supabase:serializer-jackson:2.0.0")
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-moshi:2.9.0")
-    implementation("com.squareup.moshi:moshi-kotlin:1.14.0")
 
     // Serialization
     implementation(libs.kotlinx.serialization.json)
@@ -81,7 +80,9 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
 
     // Compose
-    implementation(libs.androidx.activity.compose.v182)
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
 
+    implementation("io.coil-kt:coil-compose:2.4.0")
 
 }

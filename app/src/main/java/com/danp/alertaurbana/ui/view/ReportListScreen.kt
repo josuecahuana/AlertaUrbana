@@ -14,6 +14,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -26,16 +27,14 @@ import java.util.*
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportsListScreen(
-    onNavigateToDetail: (Int) -> Unit,
     modifier: Modifier = Modifier,
     navController: NavController,
-    viewModel: ReportsListViewModel = viewModel()
+    onNavigateToDetail: (Int) -> Unit = {}, // opcional si no lo usas ahora
+    viewModel: ReportsListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
-    Column(
-        modifier = modifier.fillMaxSize()
-    ) {
+    Column(modifier = modifier) {
         // Barra de búsqueda
         OutlinedTextField(
             value = uiState.searchQuery,

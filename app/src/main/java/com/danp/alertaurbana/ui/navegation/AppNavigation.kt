@@ -1,117 +1,76 @@
+// ui/navegation/AppNavigation.kt
 package com.danp.alertaurbana.ui.navegation
 
-// navigation/AppNavigation.kt
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
-import com.danp.alertaurbana.ui.view.LoginScreen
-import com.danp.alertaurbana.ui.view.RegisterScreen
+import com.danp.alertaurbana.ui.components.MainLayout
+import com.danp.alertaurbana.ui.view.*
+import com.danp.alertaurbana.ui.viewmodel.AuthState
+import com.danp.alertaurbana.ui.viewmodel.AuthViewModel
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
 
-
-//Esta Funcion debería ejecutarse en vez de la funcion que está en el MAinActivity
-//Por mientras este archivo no interviene en la app
 @Composable
 fun AppNavigation(
-    navController: NavHostController = rememberNavController(),
-    startDestination: String = NavigationRoutes.LOGIN
+    navController: NavHostController,
+    authState: AuthState
 ) {
+    val startDestination = when (authState) {
+        is AuthState.LoginSuccess -> NavigationRoutes.LIST
+        else -> NavigationRoutes.LOGIN
+    }
+
     NavHost(
         navController = navController,
         startDestination = startDestination
     ) {
-        // Pantallas sin bottom navigation
         composable(NavigationRoutes.LOGIN) {
             LoginScreen(
-                onNavigateToRegister = {
-                    navController.navigate("register")
-                },
                 onLoginSuccess = {
                     navController.navigate(NavigationRoutes.LIST) {
                         popUpTo(NavigationRoutes.LOGIN) { inclusive = true }
                     }
+                },
+                onNavigateToRegister = {
+                    navController.navigate(NavigationRoutes.REGISTER)
                 }
             )
         }
 
         composable(NavigationRoutes.REGISTER) {
             RegisterScreen(
-                onNavigateToLogin = {
-                    navController.popBackStack()
-                },
                 onRegisterSuccess = {
                     navController.navigate(NavigationRoutes.LIST) {
                         popUpTo(NavigationRoutes.REGISTER) { inclusive = true }
                     }
-                }
+                },
+                onNavigateToLogin = { navController.popBackStack() }
             )
         }
 
-        // Pantallas con bottom navigation
-
-        /*
-
-        *******************************************************************
-        Claude me generó este archivo para la navegación, pero como la navegación ya se estaba
-        en el Main Activity el contenido de este archivo se editó en el Main activity
-        *******************************************************************
-
-         |  |  |  |  |  |  |  |  |  |
-         V  V  V  V  V  V  V  V  V  V
-
-        composable(NavigationRoutes.REPORT_LIST) {
+        composable(NavigationRoutes.LIST) {
             MainLayout(
                 navController = navController,
-                title = "Lista de Reportes",
                 showBottomBar = true,
-                showBackButton = false
-            ) { paddingValues ->
-                ReportListScreen(
-                    onNavigateToDetail = { reportId ->
-                        navController.navigate(NavigationRoutes.reportDetail(reportId))
-                    },
-                    modifier = Modifier.padding(paddingValues)
-                )
-            }
-        }
-
-        composable(NavigationRoutes.REPORT_DETAIL) { backStackEntry ->
-            val reportId = backStackEntry.arguments?.getString("reportId") ?: ""
-
-            MainLayout(
-                navController = navController,
-                title = "Detalle del Reporte",
-                showBottomBar = true,
-                showBackButton = true
-            ) { paddingValues ->
-                ReportDetailScreen(
-                    reportId = reportId,
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    },
-                    modifier = Modifier.padding(paddingValues)
-                )
+                title = "Reportes"
+            ) { padding ->
+                ReportsListScreen(navController = navController, modifier = Modifier.padding(padding))
             }
         }
 
         composable(NavigationRoutes.CREATE_REPORT) {
             MainLayout(
                 navController = navController,
-                title = "Crear Reporte",
                 showBottomBar = true,
-                showBackButton = true
-            ) { paddingValues ->
+                showBackButton = true,
+                title = "Registrar Reporte"
+            ) { padding ->
                 CreateReportScreen(
-                    onNavigateBack = {
-                        navController.popBackStack()
-                    },
-                    onReportCreated = {
-                        navController.navigate(NavigationRoutes.REPORT_LIST) {
-                            popUpTo(NavigationRoutes.CREATE_REPORT) { inclusive = true }
-                        }
-                    },
-                    modifier = Modifier.padding(paddingValues)
+                    modifier = Modifier.padding(padding),
+                    onNavigateBack = { navController.popBackStack() } // ← Esta línea es clave
                 )
             }
         }
@@ -119,33 +78,43 @@ fun AppNavigation(
         composable(NavigationRoutes.MAP) {
             MainLayout(
                 navController = navController,
-                title = "Mapa de Reportes",
-                showBottomBar = true
-            ) { paddingValues ->
-                MapScreen(
-                    onNavigateToDetail = { reportId ->
-                        navController.navigate(NavigationRoutes.reportDetail(reportId))
-                    },
-                    modifier = Modifier.padding(paddingValues)
-                )
+                showBottomBar = true,
+                title = "Mapa de Calor"
+            ) { padding ->
+                HeatMapScreen(modifier = Modifier.padding(padding))
             }
         }
 
         composable(NavigationRoutes.PROFILE) {
+            val authViewModel: AuthViewModel = hiltViewModel()
             MainLayout(
                 navController = navController,
-                title = "Mi Perfil",
-                showBottomBar = true
-            ) { paddingValues ->
+                showBottomBar = true,
+                title = "Perfil"
+            ) { padding ->
                 ProfileScreen(
-                    onLogout = {
-                        navController.navigate(NavigationRoutes.LOGIN) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    },
-                    modifier = Modifier.padding(paddingValues)
+                    authViewModel = authViewModel,
+                    navController = navController,
+                    modifier = Modifier.padding(padding)
                 )
             }
-        }*/
+        }
+
+        composable("${NavigationRoutes.DETAIL}/{reportId}") { backStackEntry ->
+            val reportId = backStackEntry.arguments?.getString("reportId") ?: ""
+            MainLayout(
+                navController = navController,
+                showBottomBar = false,
+                showBackButton = true,
+                title = "Detalle del Reporte"
+            ) { padding ->
+                ReportDetailScreen(
+                    reportId = reportId,
+                    navController = navController,
+                    modifier = Modifier.padding(padding),
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            }
+        }
     }
 }

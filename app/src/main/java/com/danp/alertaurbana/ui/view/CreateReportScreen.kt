@@ -9,18 +9,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.danp.alertaurbana.domain.model.ReportStatus
 import com.danp.alertaurbana.ui.viewmodel.CreateReportViewModel
-import java.util.*
 
 @Composable
 fun CreateReportScreen(
+    modifier: Modifier = Modifier,
     onNavigateBack: () -> Unit,
     viewModel: CreateReportViewModel = hiltViewModel()
 ) {
@@ -45,14 +43,13 @@ fun CreateReportScreen(
         }
     ) { paddingValues ->
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Título del reporte
             OutlinedTextField(
                 value = uiState.title,
                 onValueChange = viewModel::onTitleChange,
@@ -62,7 +59,6 @@ fun CreateReportScreen(
                 supportingText = uiState.titleError?.let { { Text(it) } }
             )
 
-            // Descripción
             OutlinedTextField(
                 value = uiState.description,
                 onValueChange = viewModel::onDescriptionChange,
@@ -75,7 +71,6 @@ fun CreateReportScreen(
                 supportingText = uiState.descriptionError?.let { { Text(it) } }
             )
 
-            // Ubicación
             OutlinedTextField(
                 value = uiState.location,
                 onValueChange = viewModel::onLocationChange,
@@ -85,17 +80,20 @@ fun CreateReportScreen(
                 supportingText = uiState.locationError?.let { { Text(it) } }
             )
 
-            // Tipo de reporte (Status)
             ExposedDropdownMenuBox(
                 expanded = uiState.isStatusDropdownExpanded,
                 onExpandedChange = viewModel::onStatusDropdownToggle
             ) {
                 OutlinedTextField(
                     value = getStatusDisplayName(uiState.selectedStatus),
-                    onValueChange = { },
+                    onValueChange = {},
                     readOnly = true,
                     label = { Text("Tipo de incidente") },
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = uiState.isStatusDropdownExpanded) },
+                    trailingIcon = {
+                        ExposedDropdownMenuDefaults.TrailingIcon(
+                            expanded = uiState.isStatusDropdownExpanded
+                        )
+                    },
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth()
@@ -119,7 +117,6 @@ fun CreateReportScreen(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Botón para crear reporte
             Button(
                 onClick = viewModel::createReport,
                 modifier = Modifier.fillMaxWidth(),
@@ -135,7 +132,6 @@ fun CreateReportScreen(
                 Text("Crear Reporte")
             }
 
-            // Mostrar error general si existe
             uiState.generalError?.let { error ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),

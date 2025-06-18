@@ -1,48 +1,36 @@
+// ui/components/MainLayout.kt
 package com.danp.alertaurbana.ui.components
 
-// ui/components/MainLayout.kt
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
+import androidx.compose.runtime.Composable
+import androidx.navigation.NavHostController
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainLayout(
-    navController: NavController,
-    title: String,
-    showBottomBar: Boolean = true,
+    navController: NavHostController,
+    showBottomBar: Boolean = false,
     showBackButton: Boolean = false,
-    onBackClick: (() -> Unit)? = null,
-    floatingActionButton: @Composable () -> Unit = {},
+    title: String = "",
+    floatingActionButton: @Composable (() -> Unit) = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
     Scaffold(
-        /*topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = {
-                    if (showBackButton) {
-                        IconButton(
-                            onClick = { onBackClick?.invoke() ?: navController.popBackStack() }
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.ArrowBack,
-                                contentDescription = "Volver"
-                            )
+        topBar = {
+            if (showBackButton) {
+                TopAppBar(
+                    title = { Text(text = title) },
+                    navigationIcon = {
+                        IconButton(onClick = { navController.popBackStack() }) {
+                            Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                         }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    titleContentColor = MaterialTheme.colorScheme.onPrimaryContainer
                 )
-            )
-        },*/
+            }
+        },
         bottomBar = {
             if (showBottomBar) {
                 BottomNavigationBar(navController = navController)
