@@ -77,14 +77,15 @@ class CreateReportViewModel @Inject constructor(
             try {
                 val currentState = _uiState.value
                 val report = Report(
-                    id = UUID.randomUUID().toString(), // Temporal, el backend debería generar esto
+                    id = UUID.randomUUID().toString(),
                     title = currentState.title,
                     description = currentState.description,
                     location = currentState.location,
                     date = Date(),
                     status = currentState.selectedStatus,
-                    userId = getCurrentUserId(), // Implementar según  sistema de autenticación
-                    images = emptyList() // Por ahora vacío, se puede expandir después
+                    userId = getCurrentUserId(),
+                    images = emptyList(),
+                    lastModified = Date()
                 )
 
                 val result = reportRepository.createReport(report)
