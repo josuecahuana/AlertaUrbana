@@ -12,6 +12,8 @@ data class Report(
     val userId: String,
     val images: List<String> = emptyList(),
     val lastModified: Date, // última modificación en el servidor
+    val isSynced: Boolean = false,
+    val deletedLocally: Boolean = false
 )
 
 enum class ReportStatus {

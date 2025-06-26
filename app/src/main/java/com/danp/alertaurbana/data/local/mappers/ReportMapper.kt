@@ -9,7 +9,9 @@ import java.util.Date
 
 fun Report.toEntity(): ReportEntity {
     val moshi = Moshi.Builder().build()
-    val adapter = moshi.adapter<List<String>>(Types.newParameterizedType(List::class.java, String::class.java))
+    val adapter = moshi.adapter<List<String>>(
+        Types.newParameterizedType(List::class.java, String::class.java)
+    )
 
     return ReportEntity(
         id = id,
@@ -21,13 +23,16 @@ fun Report.toEntity(): ReportEntity {
         userId = userId,
         images = adapter.toJson(images),
         lastModified = lastModified.time,
-        lastSynced = System.currentTimeMillis() // cuando se sincroniza localmente
+        isSynced = isSynced,
+        deletedLocally = deletedLocally
     )
 }
 
 fun ReportEntity.toDomain(): Report {
     val moshi = Moshi.Builder().build()
-    val adapter = moshi.adapter<List<String>>(Types.newParameterizedType(List::class.java, String::class.java))
+    val adapter = moshi.adapter<List<String>>(
+        Types.newParameterizedType(List::class.java, String::class.java)
+    )
 
     return Report(
         id = id,
@@ -38,6 +43,8 @@ fun ReportEntity.toDomain(): Report {
         status = ReportStatus.valueOf(status),
         userId = userId,
         images = adapter.fromJson(images) ?: emptyList(),
-        lastModified = Date(lastModified)
+        lastModified = Date(lastModified),
+        isSynced = isSynced,
+        deletedLocally = deletedLocally
     )
 }

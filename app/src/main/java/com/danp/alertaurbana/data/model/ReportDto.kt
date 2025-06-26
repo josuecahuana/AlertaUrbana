@@ -17,7 +17,8 @@ data class ReportDto(
     val status: String,
     @Json(name = "user_id") val userId: String,
     val images: List<String> = emptyList(),
-    @Json(name = "last_modified") val lastModified: String
+    @Json(name = "last_modified") val lastModified: String,
+    @Json(name = "last_synced") val lastSynced: String? = null // ← Agregado
 ) {
     fun toDomain(): Report {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
@@ -34,11 +35,15 @@ data class ReportDto(
             userId = userId,
             images = images,
             lastModified = parsedModified,
+            isSynced = true,
+            deletedLocally = false
         )
     }
+
     companion object {
         fun fromDomain(report: Report): ReportDto {
             val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
+            val now = format.format(Date()) // Ahora actual
 
             return ReportDto(
                 id = report.id,
@@ -49,7 +54,8 @@ data class ReportDto(
                 status = report.status.name,
                 userId = report.userId,
                 images = report.images,
-                lastModified = format.format(report.lastModified)
+                lastModified = format.format(report.lastModified),
+                lastSynced = now // ← Se asigna el valor actual
             )
         }
     }

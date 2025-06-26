@@ -24,17 +24,22 @@ import com.danp.alertaurbana.ui.viewmodel.ReportsListViewModel
 import java.text.SimpleDateFormat
 import java.util.*
 
+import com.google.accompanist.swiperefresh.SwipeRefresh
+import com.google.accompanist.swiperefresh.SwipeRefreshIndicator
+import com.google.accompanist.swiperefresh.rememberSwipeRefreshState
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReportsListScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
-    onNavigateToDetail: (Int) -> Unit = {}, // opcional si no lo usas ahora
+    onNavigateToDetail: (Int) -> Unit = {},
     viewModel: ReportsListViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val swipeRefreshState = rememberSwipeRefreshState(isRefreshing = uiState.isLoading)
 
-    Column(modifier = modifier) {
+    Column(modifier = modifier.fillMaxSize()) {
         // Barra de búsqueda
         OutlinedTextField(
             value = uiState.searchQuery,
@@ -48,43 +53,51 @@ fun ReportsListScreen(
                 .padding(16.dp)
         )
 
-        if (uiState.isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else if (uiState.errorMessage != null) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = uiState.errorMessage!!,
-                        color = MaterialTheme.colorScheme.error
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Button(onClick = viewModel::refreshReports) {
-                        Text("Reintentar")
+        SwipeRefresh(
+            state = swipeRefreshState,
+            onRefresh = viewModel::refreshReports,
+            indicator = { state, trigger ->
+                SwipeRefreshIndicator(
+                    state = state,
+                    refreshTriggerDistance = trigger,
+                    contentColor = MaterialTheme.colorScheme.primary
+                )
+            },
+            modifier = Modifier.fillMaxSize()
+        ) {
+            when {
+                uiState.errorMessage != null -> {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text(
+                                text = uiState.errorMessage!!,
+                                color = MaterialTheme.colorScheme.error
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Button(onClick = viewModel::refreshReports) {
+                                Text("Reintentar")
+                            }
+                        }
                     }
                 }
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(uiState.reports) { report ->
-                    ReportCard(
-                        report = report,
-                        onClick = {
-                            navController.navigate("report_detail/${report.id}")
+
+                else -> {
+                    LazyColumn(
+                        modifier = Modifier.padding(horizontal = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(uiState.reports) { report ->
+                            ReportCard(
+                                report = report,
+                                onClick = {
+                                    navController.navigate("report_detail/${report.id}")
+                                }
+                            )
                         }
-                    )
+                    }
                 }
             }
         }

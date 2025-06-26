@@ -73,7 +73,7 @@ interface SupabaseService {
         "Prefer: return=representation"
     )
     @POST("reports")
-    suspend fun createReport(@Body report: ReportDto): ReportDto
+    suspend fun createReport(supabaseApiKey: String, authorization: String, @Body report: ReportDto): ReportDto
 
     @Headers(
         "apikey: mi clave",

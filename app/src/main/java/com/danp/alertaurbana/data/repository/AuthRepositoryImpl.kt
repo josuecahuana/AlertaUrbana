@@ -39,6 +39,7 @@ class AuthRepositoryImpl @Inject constructor(
         return try {
             val body = mapOf("email" to email, "password" to password)
             val response = api.signUp(apiKey, body)
+
             Result.success(response)
         } catch (e: IOException) {
             Result.failure(Exception("Sin conexión a Internet"))

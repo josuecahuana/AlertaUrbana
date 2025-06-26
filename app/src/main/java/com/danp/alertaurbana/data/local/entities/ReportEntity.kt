@@ -13,6 +13,8 @@ data class ReportEntity(
     val status: String,
     val userId: String,
     val images: String,
-    val lastModified: Long, // última modificación en el servidor
-    val lastSynced: Long    // última sincronización local
+
+    val isSynced: Boolean = false,
+    val lastModified: Long = System.currentTimeMillis(),
+    val deletedLocally: Boolean = false
 )

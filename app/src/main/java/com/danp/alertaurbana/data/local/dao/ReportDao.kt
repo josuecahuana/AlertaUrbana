@@ -20,6 +20,16 @@ interface ReportDao {
     @Query("DELETE FROM reports")
     fun clearAll()
 
-    @Query("SELECT COUNT(*) FROM reports")
-    fun count(): Int
+    @Query("SELECT * FROM reports WHERE isSynced = 0 OR deletedLocally = 1")
+    fun getPendingSyncReports(): List<ReportEntity>
+
+    @Query("DELETE FROM reports WHERE deletedLocally = 1 AND isSynced = 1")
+    fun deleteLocallyDeletedSyncedReports()
+
+    @Query("DELETE FROM reports WHERE id = :reportId")
+    suspend fun deleteReportById(reportId: String)
+
+    @Update
+    suspend fun updateReport(report: ReportEntity)
+
 }

@@ -96,4 +96,7 @@ dependencies {
 
     // WorkManager (para tareas en background si decides usarlo)
     implementation("androidx.work:work-runtime-ktx:2.8.1")
+
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.33.2-alpha")
+
 }

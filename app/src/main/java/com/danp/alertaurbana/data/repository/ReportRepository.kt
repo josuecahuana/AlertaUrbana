@@ -4,29 +4,31 @@ import com.danp.alertaurbana.data.network.SupabaseService
 import com.danp.alertaurbana.domain.model.Report
 import com.danp.alertaurbana.data.model.ReportDto
 import javax.inject.Inject
-import javax.inject.Singleton
 import javax.inject.Named
 import com.danp.alertaurbana.data.local.dao.ReportDao
-import com.danp.alertaurbana.data.local.entities.ReportEntity
 import com.danp.alertaurbana.data.local.mappers.toDomain
 import com.danp.alertaurbana.data.local.mappers.toEntity
+import com.danp.alertaurbana.data.session.SessionManager
+import kotlinx.coroutines.flow.first
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class ReportRepository @Inject constructor(
     private val api: SupabaseService,
     private val dao: ReportDao,
+    private val sessionManager: SessionManager,
     @Named("supabaseApiKey") private val supabaseApiKey: String
 ) {
-    private val authorization = "Bearer $supabaseApiKey"
-
-    suspend fun fetchReports(): List<Report> {
-        val dtos = api.getReports(supabaseApiKey, authorization)
-        return dtos.map { it.toDomain() }
+    private suspend fun getAuthorization(): String {
+        val token = sessionManager.getAccessToken().first() ?: ""
+        return "Bearer $token"
     }
 
     suspend fun getReportById(id: String): Report? {
         return try {
             // 1. Intenta desde la red
-            val dtos = api.getReportById(supabaseApiKey, authorization, "eq.$id")
+            val dtos = api.getReportById(supabaseApiKey, getAuthorization(), "eq.$id")
             val report = dtos.firstOrNull()?.toDomain()
 
             // 2. Si lo encuentra, actualiza Room
@@ -41,39 +43,87 @@ class ReportRepository @Inject constructor(
         }
     }
 
+    suspend fun syncReports() {
+        try {
+            // 1. Subir cambios locales pendientes
+            val localChanges = dao.getPendingSyncReports()
 
-    suspend fun getReports(): List<Report> {
-        return try {
-            val remoteDtos = api.getReports(supabaseApiKey, authorization)
-            val remoteReports = remoteDtos.map { it.toDomain() }
+            for (local in localChanges) {
+                if (local.deletedLocally) {
+                    // Si ya fue sincronado, se elimina también remotamente
+                    try {
+                        api.deleteReport(local.id)
+                        // Lo quitamos de Room
+                        dao.deleteReportById(local.id)
+                    } catch (_: Exception) {
+                        // Si falla, no lo borramos aún
+                    }
+                } else {
+                    val domainReport = local.toDomain()
+                    val now = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault()).format(Date())
+                    val reportDto = ReportDto.fromDomain(domainReport).copy(lastSynced = now)
 
-            // Obtener local
-            val localReportsMap = dao.getAllReports().associateBy { it.id }
+                    val response = if (dao.getReportById(local.id) == null) {
+                        api.createReport(supabaseApiKey, getAuthorization(), reportDto)
+                    } else {
+                        api.updateReport(domainReport.id, reportDto)
+                    }
 
-            val toInsert = mutableListOf<ReportEntity>()
-
-            for (remoteReport in remoteReports) {
-                val local = localReportsMap[remoteReport.id]
-
-                // Si no existe localmente o el remoto es más nuevo
-                if (local == null || remoteReport.lastModified.time > local.lastModified) {
-                    toInsert.add(remoteReport.toEntity())
+                    // Marcamos como sincronizado
+                    dao.insertReport(
+                        response.toDomain().toEntity().copy(
+                            isSynced = true,
+                            lastModified = System.currentTimeMillis(),
+                            deletedLocally = false
+                        )
+                    )
                 }
             }
 
-            // Guardar los que cambiaron
-            if (toInsert.isNotEmpty()) {
-                dao.insertReports(toInsert)
+            // 2. Bajar cambios nuevos del servidor
+            val remoteReports = api.getReports(supabaseApiKey, getAuthorization())
+
+            for (remoteDto in remoteReports) {
+                val remote = remoteDto.toDomain()
+                val local = dao.getReportById(remote.id)
+
+                // Si no existe localmente o el remoto es más reciente
+                if (
+                    local == null ||
+                    local.lastModified < remote.date.time
+                ) {
+                    dao.insertReport(
+                        remote.toEntity().copy(
+                            isSynced = true,
+                            lastModified = remote.date.time,
+                            deletedLocally = false
+                        )
+                    )
+                }
             }
 
-            // Retornar la data sincronizada
-            dao.getAllReports().map { it.toDomain() }
+            // 3. Borrar lo que fue eliminado localmente y sincronizado
+            dao.deleteLocallyDeletedSyncedReports()
 
         } catch (e: Exception) {
-            // Error de red → usar local
+            // Log o manejo de error
+            println("Error en sincronización: ${e.message}")
+        }
+    }
+
+
+    suspend fun getReports(): List<Report> {
+        return try {
+            syncReports() // Sincroniza primero
+
+            // Devuelve datos actualizados
+            dao.getAllReports().map { it.toDomain() }
+        } catch (e: Exception) {
+            // Si falla la red o la sincronización, usa los locales
             dao.getAllReports().map { it.toDomain() }
         }
     }
+
 
 
     //Fabián
@@ -83,10 +133,11 @@ class ReportRepository @Inject constructor(
             val reportDto = ReportDto.fromDomain(report)
 
             // Llamar a la API para crear el reporte
-            val createdReportDto = api.createReport(reportDto)
+            val createdReportDto = api.createReport(supabaseApiKey, getAuthorization(), reportDto)
 
             // Convertir la respuesta de vuelta a domain model
             val createdReport = createdReportDto.toDomain()
+
 
             Result.success(createdReport)
         } catch (e: Exception) {
