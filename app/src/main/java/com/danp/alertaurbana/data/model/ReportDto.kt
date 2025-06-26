@@ -16,15 +16,13 @@ data class ReportDto(
     val date: String,
     val status: String,
     @Json(name = "user_id") val userId: String,
-    val images: List<String> = emptyList()
+    val images: List<String> = emptyList(),
+    @Json(name = "last_modified") val lastModified: String
 ) {
     fun toDomain(): Report {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
-        val parsedDate = try {
-            format.parse(date) ?: Date()
-        } catch (e: Exception) {
-            Date()
-        }
+        val parsedDate = try { format.parse(date) ?: Date() } catch (e: Exception) { Date() }
+        val parsedModified = try { format.parse(lastModified) ?: Date() } catch (e: Exception) { Date() }
 
         return Report(
             id = id,
@@ -34,10 +32,10 @@ data class ReportDto(
             date = parsedDate,
             status = ReportStatus.valueOf(status),
             userId = userId,
-            images = images
+            images = images,
+            lastModified = parsedModified,
         )
     }
-
     companion object {
         fun fromDomain(report: Report): ReportDto {
             val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.getDefault())
@@ -50,7 +48,8 @@ data class ReportDto(
                 date = format.format(report.date),
                 status = report.status.name,
                 userId = report.userId,
-                images = report.images
+                images = report.images,
+                lastModified = format.format(report.lastModified)
             )
         }
     }

@@ -10,7 +10,8 @@ data class Report(
     val date: Date,
     val status: ReportStatus,
     val userId: String,
-    val images: List<String> = emptyList()
+    val images: List<String> = emptyList(),
+    val lastModified: Date, // última modificación en el servidor
 )
 
 enum class ReportStatus {
