@@ -6,20 +6,26 @@ import com.danp.alertaurbana.data.local.entities.ReportEntity
 @Dao
 interface ReportDao {
     @Query("SELECT * FROM reports")
-    fun getAllReports(): List<ReportEntity>
+    suspend fun getAllReports(): List<ReportEntity>
 
     @Query("SELECT * FROM reports WHERE id = :reportId LIMIT 1")
-    fun getReportById(reportId: String): ReportEntity?
+    suspend fun getReportById(reportId: String): ReportEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertReports(reports: List<ReportEntity>)
+    suspend fun insertReports(reports: List<ReportEntity>)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertReport(report: ReportEntity)
+    suspend fun insertReport(report: ReportEntity)
+
+    @Delete
+    suspend fun deleteReport(report: ReportEntity)
+
+    @Query("DELETE FROM reports WHERE id = :reportId")
+    suspend fun deleteReportById(reportId: String)
 
     @Query("DELETE FROM reports")
-    fun clearAll()
+    suspend fun clearAll()
 
     @Query("SELECT COUNT(*) FROM reports")
-    fun count(): Int
+    suspend fun count(): Int
 }

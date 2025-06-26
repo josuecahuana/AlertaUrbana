@@ -66,28 +66,33 @@ interface SupabaseService {
 
 
     // Fabián:
+    @POST("rest/v1/reports")
     @Headers(
-        "apikey: mi clave",
-        "Authorization: Bearer mi token",
         "Content-Type: application/json",
         "Prefer: return=representation"
     )
-    @POST("reports")
-    suspend fun createReport(@Body report: ReportDto): ReportDto
+    suspend fun createReport(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") authorization: String,
+        @Body report: ReportDto
+    ): ReportDto
 
+    @PATCH("rest/v1/reports")
     @Headers(
-        "apikey: mi clave",
-        "Authorization: Bearer mi token",
         "Content-Type: application/json",
         "Prefer: return=representation"
     )
-    @PATCH("reports?id=eq.{id}")
-    suspend fun updateReport(@Path("id") id: String, @Body report: ReportDto): ReportDto
+    suspend fun updateReport(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") authorization: String,
+        @Query("id") id: String,
+        @Body report: ReportDto
+    ): ReportDto
 
-    @Headers(
-        "apikey: mi clave",
-        "Authorization: Bearer mi token"
+    @DELETE("rest/v1/reports")
+    suspend fun deleteReport(
+        @Header("apikey") apiKey: String,
+        @Header("Authorization") authorization: String,
+        @Query("id") id: String
     )
-    @DELETE("reports?id=eq.{id}")
-    suspend fun deleteReport(@Path("id") id: String)
 }
