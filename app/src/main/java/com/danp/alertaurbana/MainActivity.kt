@@ -18,7 +18,15 @@ import com.danp.alertaurbana.ui.theme.AlertaUrbanaTheme
 import com.danp.alertaurbana.ui.viewmodel.AuthViewModel
 import com.danp.alertaurbana.data.work.UserSyncWorker
 import dagger.hilt.android.AndroidEntryPoint
-
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -33,9 +41,28 @@ class MainActivity : ComponentActivity() {
                     val authViewModel = hiltViewModel<AuthViewModel>()
                     val authState by authViewModel.authState.collectAsState()
 
+                    var locationPermissionGranted by remember { mutableStateOf(false) }
+
+                    // Solicitud de permiso
+                    val requestPermissionLauncher = rememberLauncherForActivityResult(
+                        contract = ActivityResultContracts.RequestPermission()
+                    ) { isGranted: Boolean ->
+                        locationPermissionGranted = isGranted
+                    }
+
                     LaunchedEffect(Unit) {
                         authViewModel.checkLogin()
                         UserSyncWorker.schedule(applicationContext)
+
+                        if (ContextCompat.checkSelfPermission(
+                                this@MainActivity,
+                                Manifest.permission.ACCESS_FINE_LOCATION
+                            ) != PackageManager.PERMISSION_GRANTED
+                        ) {
+                            requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+                        } else {
+                            locationPermissionGranted = true
+                        }
                     }
 
                     AppNavigation(navController = navController, authState = authState)
