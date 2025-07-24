@@ -11,56 +11,53 @@ import com.danp.alertaurbana.data.local.entities.ReportEntity
 import com.danp.alertaurbana.data.local.mappers.toDomain
 import com.danp.alertaurbana.data.local.mappers.toEntity
 import android.util.Log
+import com.danp.alertaurbana.data.session.SessionManager
+import kotlinx.coroutines.flow.firstOrNull
 
 @Singleton
 class ReportRepository @Inject constructor(
     private val api: SupabaseService,
     private val dao: ReportDao,
+    private val sessionManager: SessionManager,
     @Named("supabaseApiKey") private val supabaseApiKey: String
 ) {
-    private val authorization = "Bearer $supabaseApiKey"
-
     suspend fun getReports(): List<Report> {
         return try {
+            val accessToken = sessionManager.getAccessToken().firstOrNull()
+            val authorization = "Bearer $accessToken"
+
             val remoteDtos = api.getReports(supabaseApiKey, authorization)
             val remoteReports = remoteDtos.map { it.toDomain() }
 
-            // Obtener local
             val localReportsMap = dao.getAllReports().associateBy { it.id }
-
             val toInsert = mutableListOf<ReportEntity>()
 
             for (remoteReport in remoteReports) {
                 val local = localReportsMap[remoteReport.id]
-
-                // Si no existe localmente o el remoto es más nuevo
                 if (local == null || remoteReport.lastModified.time > local.lastModified) {
                     toInsert.add(remoteReport.toEntity())
                 }
             }
 
-            // Guardar los que cambiaron
             if (toInsert.isNotEmpty()) {
                 dao.insertReports(toInsert)
             }
 
-            // Retornar la data sincronizada
             dao.getAllReports().map { it.toDomain() }
-
         } catch (e: Exception) {
             Log.e("ReportRepository", "Error fetching reports from network", e)
-            // Error de red → usar local
             dao.getAllReports().map { it.toDomain() }
         }
     }
 
     suspend fun getReportById(id: String): Report? {
         return try {
-            // 1. Intenta desde la red
+            val accessToken = sessionManager.getAccessToken().firstOrNull()
+            val authorization = "Bearer $accessToken"
+
             val dtos = api.getReportById(supabaseApiKey, authorization, "eq.$id")
             val report = dtos.firstOrNull()?.toDomain()
 
-            // 2. Si lo encuentra, actualiza Room
             if (report != null) {
                 dao.insertReport(report.toEntity())
             }
@@ -68,7 +65,6 @@ class ReportRepository @Inject constructor(
             report
         } catch (e: Exception) {
             Log.e("ReportRepository", "Error fetching report by id from network", e)
-            // 3. Si hay error, intenta desde Room
             dao.getReportById(id)?.toDomain()
         }
     }
@@ -76,31 +72,35 @@ class ReportRepository @Inject constructor(
     suspend fun createReport(report: Report): Result<Report> {
         return try {
             Log.d("ReportRepository", "Creating report: ${report.title}")
+            val accessToken = sessionManager.getAccessToken().firstOrNull()
 
-            // Convertir el Report domain a DTO para enviar a la API
+            if (accessToken.isNullOrBlank()) {
+                return Result.failure(Exception("No se encontró access token del usuario"))
+            }
+
+            val authorization = "Bearer $accessToken"
             val reportDto = ReportDto.fromDomain(report)
             Log.d("ReportRepository", "Converted to DTO: $reportDto")
 
-            // Llamar a la API para crear el reporte
-            val createdReportDto = api.createReport(
+            val createdReportDtoList = api.createReport(
                 apiKey = supabaseApiKey,
-                authorization = authorization,
+                auth = authorization,
                 report = reportDto
             )
 
-            Log.d("ReportRepository", "API response: $createdReportDto")
+            val createdReportDto = createdReportDtoList.firstOrNull()
 
-            // Convertir la respuesta de vuelta a domain model
+            if (createdReportDto == null) {
+                return Result.failure(Exception("No se pudo crear el reporte en el servidor"))
+            }
+
             val createdReport = createdReportDto.toDomain()
-
-            // Guardar también en local
             dao.insertReport(createdReport.toEntity())
 
             Result.success(createdReport)
         } catch (e: Exception) {
             Log.e("ReportRepository", "Error creating report", e)
 
-            // Si falla la red, intentar guardar solo localmente
             try {
                 dao.insertReport(report.toEntity())
                 Result.success(report)
@@ -113,6 +113,9 @@ class ReportRepository @Inject constructor(
 
     suspend fun updateReport(report: Report): Result<Report> {
         return try {
+            val accessToken = sessionManager.getAccessToken().firstOrNull()
+            val authorization = "Bearer $accessToken"
+
             val reportDto = ReportDto.fromDomain(report)
             val updatedReportDto = api.updateReport(
                 apiKey = supabaseApiKey,
@@ -120,9 +123,8 @@ class ReportRepository @Inject constructor(
                 id = "eq.${report.id}",
                 report = reportDto
             )
-            val updatedReport = updatedReportDto.toDomain()
 
-            // Actualizar en local también
+            val updatedReport = updatedReportDto.toDomain()
             dao.insertReport(updatedReport.toEntity())
 
             Result.success(updatedReport)
@@ -134,15 +136,16 @@ class ReportRepository @Inject constructor(
 
     suspend fun deleteReport(reportId: String): Result<Boolean> {
         return try {
+            val accessToken = sessionManager.getAccessToken().firstOrNull()
+            val authorization = "Bearer $accessToken"
+
             api.deleteReport(
                 apiKey = supabaseApiKey,
                 authorization = authorization,
                 id = "eq.$reportId"
             )
 
-            // Eliminar de local también
             dao.deleteReportById(reportId)
-
             Result.success(true)
         } catch (e: Exception) {
             Log.e("ReportRepository", "Error deleting report", e)

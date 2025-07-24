@@ -73,9 +73,9 @@ interface SupabaseService {
     )
     suspend fun createReport(
         @Header("apikey") apiKey: String,
-        @Header("Authorization") authorization: String,
+        @Header("Authorization") auth: String,
         @Body report: ReportDto
-    ): ReportDto
+    ): List<ReportDto>
 
     @PATCH("rest/v1/reports")
     @Headers(

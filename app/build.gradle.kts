@@ -100,4 +100,8 @@ dependencies {
     implementation ("androidx.hilt:hilt-work:1.1.0")
     kapt ("androidx.hilt:hilt-compiler:1.1.0")
 
+    // Mapas
+    implementation ("com.google.maps.android:maps-compose:2.11.4")
+    implementation ("com.google.android.gms:play-services-maps:18.2.0")
+
 }
