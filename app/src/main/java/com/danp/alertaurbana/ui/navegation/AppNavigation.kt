@@ -70,7 +70,12 @@ fun AppNavigation(
             ) { padding ->
                 CreateReportScreen(
                     modifier = Modifier.padding(padding),
-                    onNavigateBack = { navController.popBackStack() } // ← Esta línea es clave
+                    /*onNavigateBack = { navController.popBackStack() } // ← Esta línea es clave*/
+                    onNavigateToList = {
+                        navController.navigate(NavigationRoutes.LIST) {
+                            popUpTo(NavigationRoutes.LIST) { inclusive = true }
+                        }
+                    }
                 )
             }
         }
@@ -116,5 +121,7 @@ fun AppNavigation(
                 )
             }
         }
+
+
     }
 }

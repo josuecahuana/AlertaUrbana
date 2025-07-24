@@ -114,7 +114,8 @@ class CreateReportViewModel @Inject constructor(
                 if (result.isSuccess) {
                     _uiState.value = _uiState.value.copy(
                         isLoading = false,
-                        isReportCreated = true
+                        isReportCreated = true,
+                        showSuccessMessage = true
                     )
                 } else {
                     _uiState.value = _uiState.value.copy(
@@ -153,6 +154,10 @@ class CreateReportViewModel @Inject constructor(
 
         return errors
     }
+
+    fun onSuccessMessageShown() {
+        _uiState.value = _uiState.value.copy(showSuccessMessage = false)
+    }
 }
 
 data class CreateReportUiState(
@@ -163,6 +168,7 @@ data class CreateReportUiState(
     val isStatusDropdownExpanded: Boolean = false,
     val isLoading: Boolean = false,
     val isReportCreated: Boolean = false,
+    val showSuccessMessage: Boolean = false,
     val titleError: String? = null,
     val descriptionError: String? = null,
     val locationError: String? = null,

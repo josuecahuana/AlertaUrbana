@@ -19,17 +19,27 @@ import com.danp.alertaurbana.ui.viewmodel.CreateReportViewModel
 @Composable
 fun CreateReportScreen(
     modifier: Modifier = Modifier,
-    onNavigateBack: () -> Unit,
+    onNavigateToList: () -> Unit,
     viewModel: CreateReportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showMapDialog by remember { mutableStateOf(false) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
-    LaunchedEffect(uiState.isReportCreated) {
-        if (uiState.isReportCreated) {
-            // Pasar resultado usando savedStateHandle
-            viewModel.setReportCreatedResult()
-            onNavigateBack()
+    LaunchedEffect(uiState.showSuccessMessage) {
+        if (uiState.showSuccessMessage) {
+            // Mostrar mensaje por 2 segundos y luego navegar
+            kotlinx.coroutines.delay(2000)
+            viewModel.onSuccessMessageShown()
+            onNavigateToList()
+        }
+    }
+    LaunchedEffect(uiState.showSuccessMessage) {
+        if (uiState.showSuccessMessage) {
+            snackbarHostState.showSnackbar(
+                message = "¡Reporte creado exitosamente!",
+                duration = SnackbarDuration.Short
+            )
         }
     }
 
@@ -48,7 +58,7 @@ fun CreateReportScreen(
             TopAppBar(
                 title = { Text("Crear Reporte") },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(onClick = onNavigateToList) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Volver")
                     }
                 }
