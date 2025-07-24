@@ -23,11 +23,24 @@ fun CreateReportScreen(
     viewModel: CreateReportViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    var showMapDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState.isReportCreated) {
         if (uiState.isReportCreated) {
+            // Pasar resultado usando savedStateHandle
+            viewModel.setReportCreatedResult()
             onNavigateBack()
         }
+    }
+
+    if (showMapDialog) {
+        LocationPickerDialog(
+            onDismiss = { showMapDialog = false },
+            onLocationSelected = {
+                viewModel.onLocationSelected(it)
+                showMapDialog = false
+            }
+        )
     }
 
     Scaffold(
@@ -71,14 +84,25 @@ fun CreateReportScreen(
                 supportingText = uiState.descriptionError?.let { { Text(it) } }
             )
 
-            OutlinedTextField(
+            TextButton(
+                onClick = { showMapDialog = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                val location = uiState.location
+                Text(
+                    text = if (location != null) "Ubicación: ${location.latitude}, ${location.longitude}" else "Seleccionar ubicación",
+                    color = if (location != null) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.primary
+                )
+            }
+
+            /*OutlinedTextField(
                 value = uiState.location,
                 onValueChange = viewModel::onLocationChange,
                 label = { Text("Ubicación") },
                 modifier = Modifier.fillMaxWidth(),
                 isError = uiState.locationError != null,
                 supportingText = uiState.locationError?.let { { Text(it) } }
-            )
+            )*/
 
             ExposedDropdownMenuBox(
                 expanded = uiState.isStatusDropdownExpanded,

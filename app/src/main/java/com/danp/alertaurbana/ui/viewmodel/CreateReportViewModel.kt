@@ -1,25 +1,35 @@
 package com.danp.alertaurbana.ui.viewmodel
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.danp.alertaurbana.domain.model.Report
 import com.danp.alertaurbana.domain.model.ReportStatus
 import com.danp.alertaurbana.data.repository.ReportRepository
+import com.danp.alertaurbana.data.session.SessionManager
+import com.google.android.gms.maps.model.LatLng
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
 @HiltViewModel
 class CreateReportViewModel @Inject constructor(
-    private val reportRepository: ReportRepository
+    private val reportRepository: ReportRepository,
+    private val sessionManager: SessionManager, // 🔹 Inyectar SessionManager
+    private val savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(CreateReportUiState())
     val uiState: StateFlow<CreateReportUiState> = _uiState.asStateFlow()
+
+    fun setReportCreatedResult() {
+        savedStateHandle["report_created"] = true
+    }
 
     fun onTitleChange(title: String) {
         _uiState.value = _uiState.value.copy(
@@ -35,9 +45,9 @@ class CreateReportViewModel @Inject constructor(
         )
     }
 
-    fun onLocationChange(location: String) {
+    fun onLocationSelected(latLng: LatLng) {
         _uiState.value = _uiState.value.copy(
-            location = location,
+            location = latLng,
             locationError = null
         )
     }
@@ -75,15 +85,26 @@ class CreateReportViewModel @Inject constructor(
             _uiState.value = _uiState.value.copy(isLoading = true)
 
             try {
+                // 🔹 Obtener el userId real del SessionManager
+                val userId = sessionManager.getUserId().first()
+
+                if (userId.isNullOrEmpty()) {
+                    _uiState.value = _uiState.value.copy(
+                        isLoading = false,
+                        generalError = "Error: Usuario no autenticado. Por favor, inicia sesión nuevamente."
+                    )
+                    return@launch
+                }
+
                 val currentState = _uiState.value
                 val report = Report(
                     id = UUID.randomUUID().toString(),
                     title = currentState.title,
                     description = currentState.description,
-                    location = currentState.location,
+                    location = "${currentState.location?.latitude},${currentState.location?.longitude}",
                     date = Date(),
                     status = currentState.selectedStatus,
-                    userId = getCurrentUserId(),
+                    userId = userId, // 🔹 Usar el userId real
                     images = emptyList(),
                     lastModified = Date()
                 )
@@ -126,24 +147,18 @@ class CreateReportViewModel @Inject constructor(
             errors["description"] = "La descripción debe tener al menos 10 caracteres"
         }
 
-        if (currentState.location.isBlank()) {
+        if (currentState.location == null) {
             errors["location"] = "La ubicación es obligatoria"
         }
 
         return errors
-    }
-
-    private fun getCurrentUserId(): String {
-        // TODO: Implementar según tu sistema de autenticación
-        // Por ahora retorna un ID temporal
-        return "temp_user_id"
     }
 }
 
 data class CreateReportUiState(
     val title: String = "",
     val description: String = "",
-    val location: String = "",
+    val location: LatLng? = null,
     val selectedStatus: ReportStatus = ReportStatus.PENDING,
     val isStatusDropdownExpanded: Boolean = false,
     val isLoading: Boolean = false,
