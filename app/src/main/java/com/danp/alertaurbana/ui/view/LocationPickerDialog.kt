@@ -42,7 +42,7 @@ fun LocationPickerDialog(
         ) {
             var selectedLocation by remember { mutableStateOf<LatLng?>(null) }
             val cameraPositionState = rememberCameraPositionState {
-                position = CameraPosition.fromLatLngZoom(LatLng(-12.0464, -77.0428), 12f) // Lima por defecto
+                position = CameraPosition.fromLatLngZoom(LatLng(-16.399085116592843, -71.53714069614601), 12f) // Lima por defecto
             }
 
             Column {
