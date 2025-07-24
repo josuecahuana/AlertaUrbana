@@ -1,5 +1,6 @@
 package com.danp.alertaurbana.data.repository
 
+import com.danp.alertaurbana.data.local.dao.UserDao
 import com.danp.alertaurbana.data.model.UserDto
 import com.danp.alertaurbana.data.model.UserProfileUpsertDto
 import com.danp.alertaurbana.data.network.SupabaseService
@@ -9,10 +10,13 @@ import retrofit2.HttpException
 import java.io.IOException
 import javax.inject.Inject
 import javax.inject.Named
+import com.danp.alertaurbana.data.local.mappers.toDomain
+import com.danp.alertaurbana.data.local.mappers.toEntity
 
 class UserRepositoryImpl @Inject constructor(
     private val api: SupabaseService,
-    @Named("supabaseApiKey") private val apiKey: String
+    @Named("supabaseApiKey") private val apiKey: String,
+    private val userDao: UserDao  // <-- agrega esto
 ) : UserRepository {
 
     override suspend fun getUser(userId: String, accessToken: String): Result<User> {
@@ -22,13 +26,23 @@ class UserRepositoryImpl @Inject constructor(
                 auth = "Bearer $accessToken",
                 userId = "eq.$userId"
             ).firstOrNull()
+
             if (response != null) {
-                Result.success(response.toDomain())
+                val user = response.toDomain()
+                userDao.insertUser(user.toEntity()) // 🔁 guarda en local
+                Result.success(user)
             } else {
                 Result.failure(Exception("Usuario no encontrado"))
             }
+
         } catch (e: IOException) {
-            Result.failure(Exception("Sin conexión a Internet"))
+            // 🔁 En caso de error de red, intenta desde Room
+            val localUser = userDao.getUserById(userId)
+            return if (localUser != null) {
+                Result.success(localUser.toDomain())
+            } else {
+                Result.failure(Exception("Sin conexión y sin datos locales"))
+            }
         } catch (e: HttpException) {
             Result.failure(Exception("Error al obtener datos del usuario"))
         }

@@ -1,31 +1,36 @@
 package com.danp.alertaurbana.di
 
+
 import android.content.Context
 import androidx.room.Room
-import com.danp.alertaurbana.data.local.ReportDatabase
+import com.danp.alertaurbana.data.local.AppDatabase
+import com.danp.alertaurbana.data.local.dao.UserDao
 import com.danp.alertaurbana.data.local.dao.ReportDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
-import dagger.hilt.android.qualifiers.ActivityContext
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object LocalDatabaseModule {
+object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext context: Context): ReportDatabase {
+    fun provideDatabase(@ApplicationContext context: Context): AppDatabase {
         return Room.databaseBuilder(
             context,
-            ReportDatabase::class.java,
-            "report_database"
-        ).allowMainThreadQueries().fallbackToDestructiveMigration().build()
+            AppDatabase::class.java,
+            "alertaurbana.db"
+        ).fallbackToDestructiveMigration()
+            .build()
     }
 
     @Provides
-    fun provideReportDao(db: ReportDatabase): ReportDao = db.reportDao()
+    fun provideUserDao(db: AppDatabase): UserDao = db.userDao()
+
+    @Provides
+    fun provideReportDao(db: AppDatabase): ReportDao = db.reportDao()
 }

@@ -1,8 +1,10 @@
 package com.danp.alertaurbana.di
 
 import com.danp.alertaurbana.data.repository.AuthRepositoryImpl
+import com.danp.alertaurbana.data.repository.LocalUserRepositoryImpl
 import com.danp.alertaurbana.data.repository.UserRepositoryImpl
 import com.danp.alertaurbana.domain.repository.AuthRepository
+import com.danp.alertaurbana.domain.repository.LocalUserRepository
 import com.danp.alertaurbana.domain.repository.UserRepository
 import dagger.Binds
 import dagger.Module
@@ -25,4 +27,10 @@ abstract class RepositoryModule {
     abstract fun bindUserRepository(
         impl: UserRepositoryImpl
     ): UserRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindLocalUserRepository(
+        impl: LocalUserRepositoryImpl
+    ): LocalUserRepository
 }

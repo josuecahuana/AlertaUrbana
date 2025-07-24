@@ -16,6 +16,7 @@ import androidx.navigation.compose.rememberNavController
 import com.danp.alertaurbana.ui.navegation.AppNavigation
 import com.danp.alertaurbana.ui.theme.AlertaUrbanaTheme
 import com.danp.alertaurbana.ui.viewmodel.AuthViewModel
+import com.danp.alertaurbana.data.work.UserSyncWorker
 import dagger.hilt.android.AndroidEntryPoint
 
 @AndroidEntryPoint
@@ -34,6 +35,7 @@ class MainActivity : ComponentActivity() {
 
                     LaunchedEffect(Unit) {
                         authViewModel.checkLogin()
+                        UserSyncWorker.schedule(applicationContext)
                     }
 
                     AppNavigation(navController = navController, authState = authState)

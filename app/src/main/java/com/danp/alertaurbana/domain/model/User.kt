@@ -5,5 +5,6 @@ data class User(
     val nombre: String?,
     val direccion: String?,
     val telefono: String?,
-    val fotoUrl: String?
+    val fotoUrl: String?,
+    val isSynced: Boolean = true
 )
