@@ -15,6 +15,7 @@ import javax.inject.Inject
 import com.danp.alertaurbana.data.local.mappers.toDomain
 import com.danp.alertaurbana.data.local.mappers.toEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
+import com.danp.alertaurbana.data.repository.ReportRepository
 
 import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
@@ -22,7 +23,7 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import com.danp.alertaurbana.data.work.UserSyncWorker
-
+import com.danp.alertaurbana.domain.model.Report
 
 
 @HiltViewModel
@@ -30,6 +31,7 @@ class ProfileViewModel @Inject constructor(
     private val repository: UserRepository,
     private val sessionManager: SessionManager,
     private val localRepository: LocalUserRepository,
+    private val reportRepository: ReportRepository,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
 
@@ -38,6 +40,17 @@ class ProfileViewModel @Inject constructor(
         object Loading : UserUiState()
         data class Success(val user: User, val email: String) : UserUiState()
         data class Error(val message: String) : UserUiState()
+    }
+
+    private val _userReports = MutableStateFlow<List<Report>>(emptyList())
+    val userReports: StateFlow<List<Report>> = _userReports.asStateFlow()
+
+    fun loadUserReports() {
+        viewModelScope.launch {
+            _userReports.value = reportRepository.getReports().filter {
+                it.userId == sessionManager.getUserId().firstOrNull()
+            }
+        }
     }
 
     private val _uiState = MutableStateFlow<UserUiState>(UserUiState.Idle)
